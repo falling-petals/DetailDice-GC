@@ -1,0 +1,91 @@
+{
+  "source_model": {
+    "architecture": "GCNet-S N=2, expanded multi-path graph",
+    "repository": "https://github.com/gyyang23/GCNet",
+    "revision": "8b4c0abf82cfe13a39ae10d8431a554fc5b3284b",
+    "config": "gcnet-s_4xb3-120k_cityscapes-1024x1024.py",
+    "checkpoint_url": "https://drive.google.com/file/d/1KersBP95k3b0AELiYlQ1rk4PKUmN-ueu/view",
+    "checkpoint_sha256": "6da067d1d452350ee82efb9cbb3c67eea3ed6c4b3fe90ca96cc2eaf50a7e99da",
+    "checkpoint_dataset": "Cityscapes",
+    "classifier_paths": ["decode_head.conv_seg", "decode_head.aux_cls_seg_c4"]
+  },
+  "camvid": {
+    "repository": "https://github.com/alexgkendall/SegNet-Tutorial",
+    "revision": "fcaf7c4978dd8d091ec67db7cb7fdd225f5051c5",
+    "width_height": [480, 360],
+    "classes": 11,
+    "void_label": 11,
+    "training_ignore_index": 255,
+    "original_training_count": 367,
+    "subset_count": 37,
+    "video_quotas": {"0001TP": 6, "0006R0": 10, "0016E5": 21},
+    "subset_a": {"list": "subset-a.txt", "sampling_seed": 304},
+    "subset_b": {"list": "subset-b.txt", "sampling_seed": 2027, "excludes_subset_a": true},
+    "validation_count": 101,
+    "validation_ids_sha256": "a4d1bb05c8f6205ce3c527b63d5992bdf3018106681a75849aad9d2ac67b8ca4",
+    "test_count": 233,
+    "test_ids_sha256": "053e5f4be20fc8aeee9a2d3581560a88d42a3882836a9f9b1785f3daf72029ad",
+    "ids_digest_encoding": "Sort PNG basenames and encode as UTF-8, one ID per line with a final LF",
+    "normalization_rgb_0_to_255": {
+      "mean": [123.675, 116.28, 103.53],
+      "std": [58.395, 57.12, 57.375]
+    }
+  },
+  "training": {
+    "scopes": {
+      "heads": {"path": "decode_head", "parameters": 112662, "initial_lr": 0.0005},
+      "detail_block": {"path": "backbone.detail_branch_layers.2.1", "parameters": 362240, "initial_lr": 0.0001},
+      "semantic_control_block": {"path": "backbone.semantic_branch_layers.0.4", "parameters": 362240, "initial_lr": 0.0001},
+      "convolutional_lora_control": {
+        "stage_paths": ["backbone.detail_branch_layers.2", "backbone.semantic_branch_layers.2"],
+        "convolution_count": 24,
+        "rank": 12,
+        "alpha": 24,
+        "factors": 357120,
+        "initial_lr": 0.005,
+        "folded_before_validation": true
+      },
+      "full_backbone_initial_lr": 0.0001
+    },
+    "detaildice_trainable_parameters": 474902,
+    "total_two_head_parameters": 20694390,
+    "batchnorm_running_statistics": "frozen",
+    "optimizer": {"name": "SGD", "momentum": 0.9, "weight_decay": 0.0005},
+    "batch_size": 2,
+    "precision": "CUDA AMP FP16; loss math FP32; retry overflow on the same minibatch",
+    "horizontal_flip_probability": 0.5,
+    "sample_order": "Shuffle sorted IDs per cycle using Random(training_seed + cycle); draw flips in a separate Random(training_seed) stream",
+    "poly_power": 0.9,
+    "fixed_step_schedule": "initial_lr * (1 - completed_updates / update_budget) ** poly_power",
+    "main_ce_weight": 1.0,
+    "auxiliary_ce_weight": 0.4,
+    "main_dice_weight": 0.5,
+    "dice_smoothing": 1.0,
+    "dice_reduction": "Mean over ground-truth-present classes pooled across valid pixels in the minibatch",
+    "fixed_steps": [400, 800],
+    "fixed_step_subset_seeds": {"A": [304, 3407], "B": [304]},
+    "timed_comparison": {
+      "subset": "A",
+      "training_seed": 3407,
+      "seconds": 45,
+      "warmup_updates": 8,
+      "poly_schedule_progress": "Elapsed seconds divided by the time budget after resetting model, optimizer, scaler and RNG state"
+    },
+    "reported_device": "NVIDIA GeForce RTX 4060 Laptop GPU",
+    "reported_pytorch": "2.7.1"
+  },
+  "evaluation": {
+    "main_head_only": true,
+    "resize": {"mode": "bilinear", "align_corners": false},
+    "native_resolution": true,
+    "batch_size": 1,
+    "precision": "FP32",
+    "test_time_augmentation": false,
+    "metric": "mIoU from the pooled 11-class confusion matrix with void excluded",
+    "held_out_subset": "A",
+    "held_out_training_seed": 3407,
+    "held_out_training_updates": 800,
+    "historical_test_plan_sha256": "2df89a020516c872aa9c1426275e80114236c5b43a1d17097eba0970fabec74e",
+    "historical_test_summary": "locked-results.json"
+  }
+}
